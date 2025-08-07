@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V26MEME - Autonomous Trading Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            text-shadow: 0 0 20px #00ff00;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 1.2em;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .metric-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-change {
+            font-size: 0.9em;
+        }
+        
+        .positive {
+            color: #00ff00;
+        }
+        
+        .negative {
+            color: #ff0000;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 30px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00aa00);
+            transition: width 0.3s ease;
+        }
+        
+        .warning {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffff00;
+            color: #ffff00;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            border-radius: 20px;
+        }
+        
+        .status.connected {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .status.disconnected {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="status" id="connection-status">● CONNECTING...</div>
+    
+    <div class="header">
+        <h1>V26MEME</h1>
+        <div class="subtitle">Autonomous Trading Intelligence</div>
+        <div class="subtitle" style="margin-top: 10px; color: #00ff00;">
+            READ-ONLY MONITORING - NO MANUAL INTERVENTION
+        </div>
+    </div>
+    
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">CURRENT CAPITAL</div>
+            <div class="metric-value" id="capital">$200.00</div>
+            <div class="metric-change" id="capital-change">+0.00%</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-label">PROFIT/LOSS</div>
+            <div class="metric-value" id="pnl">$0.00</div>
+            <div class="metric-change" id="pnl-percentage">0.00%</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-label">ACTIVE PATTERNS</div>
+            <div class="metric-value" id="patterns">0</div>
+            <div class="metric-change">Discovery: <span id="discovery-rate">0</span>/hr</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-label">WIN RATE</div>
+            <div class="metric-value" id="win-rate">0.0%</div>
+            <div class="metric-change">Min Required: 55%</div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+        <div style="color: #888; margin-bottom: 10px;">PROGRESS TO $1,000,000</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress" style="width: 0.02%;"></div>
+        </div>
+        <div style="margin-top: 10px; font-size: 1.2em;">
+            <span id="progress-percentage">0.02%</span> Complete
+        </div>
+    </div>
+    
+    <div class="warning" id="risk-warning" style="display: none;">
+        ⚠️ RISK LIMIT APPROACHING - Circuit breakers may activate
+    </div>
+    
+    <script>
+        let ws = null;
+        
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:3000/ws');
+            
+            ws.onopen = () => {
+                document.getElementById('connection-status').textContent = '● CONNECTED';
+                document.getElementById('connection-status').className = 'status connected';
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateDashboard(data);
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connection-status').textContent = '● DISCONNECTED';
+                document.getElementById('connection-status').className = 'status disconnected';
+                // Reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function updateDashboard(data) {
+            // Update capital
+            document.getElementById('capital').textContent = `$${data.current_capital.toFixed(2)}`;
+            document.getElementById('capital-change').textContent = `${data.pnl_percentage >= 0 ? '+' : ''}${data.pnl_percentage.toFixed(2)}%`;
+            document.getElementById('capital-change').className = `metric-change ${data.pnl_percentage >= 0 ? 'positive' : 'negative'}`;
+            
+            // Update P&L
+            document.getElementById('pnl').textContent = `${data.pnl >= 0 ? '+' : ''}$${data.pnl.toFixed(2)}`;
+            document.getElementById('pnl').className = `metric-value ${data.pnl >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('pnl-percentage').textContent = `${data.pnl_percentage.toFixed(2)}%`;
+            document.getElementById('pnl-percentage').className = `metric-change ${data.pnl >= 0 ? 'positive' : 'negative'}`;
+            
+            // Update patterns
+            document.getElementById('patterns').textContent = data.active_patterns;
+            document.getElementById('discovery-rate').textContent = data.discovery_rate;
+            
+            // Update win rate
+            document.getElementById('win-rate').textContent = `${data.win_rate.toFixed(1)}%`;
+            document.getElementById('win-rate').className = `metric-value ${data.win_rate >= 55 ? 'positive' : 'negative'}`;
+            
+            // Update progress bar
+            document.getElementById('progress').style.width = `${Math.min(data.progress_percentage, 100)}%`;
+            document.getElementById('progress-percentage').textContent = data.progress_percentage.toFixed(4);
+            
+            // Show risk warning if needed
+            if (data.pnl_percentage < -20) {
+                document.getElementById('risk-warning').style.display = 'block';
+            } else {
+                document.getElementById('risk-warning').style.display = 'none';
+            }
+        }
+        
+        // Connect on load
+        connectWebSocket();
+    </script>
+</body>
+</html>

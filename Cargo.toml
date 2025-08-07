@@ -1,0 +1,41 @@
+[package]
+name = "v26meme"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "v26meme"
+path = "main.rs"
+
+[[bin]]
+name = "discovery_engine"
+path = "core/discovery_engine.rs"
+
+[[bin]]
+name = "risk_manager"
+path = "core/risk_manager.rs"
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8"
+sha2 = "0.10"
+chrono = { version = "0.4", features = ["serde"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
+dotenv = "0.15"
+log = "0.4"
+env_logger = "0.11"
+reqwest = { version = "0.11", features = ["json"] }
+async-trait = "0.1"
+
+# Performance
+rayon = "1.8"
+crossbeam = "0.8"
+
+# Web3 and trading dependencies
+web3 = "0.19"
+
+[dev-dependencies]
+criterion = "0.5"
+tokio-test = "0.4"

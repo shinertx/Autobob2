@@ -1,0 +1,89 @@
+# V26MEME Autonomous Trading AI
+
+# Environment files (contain API keys)
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+
+# Data files
+data/backtests/
+data/patterns/
+data/cache/
+
+# Auto-generated strategies
+strategies/discovered/
+
+# Build artifacts
+target/
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database
+*.sqlite
+*.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker
+.dockerignore
+
+# Backup files
+*.bak
+*.backup
+
+# Keys and certificates (NEVER commit these)
+*.pem
+*.key
+private_key*
+wallet*
+
+# Trading data (potentially sensitive)
+trades.json
+positions.json
+balances.json
